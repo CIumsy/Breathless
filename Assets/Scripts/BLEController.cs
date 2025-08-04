@@ -13,17 +13,15 @@ public class BLEController : MonoBehaviour
     
     [Header("Simulation Settings")]
     public bool enableSimulation = true;
-    public float commandInterval = 3.0f; // seconds between commands
+    public float commandInterval = 3.0f;
     
-    // BLE connection status
     private bool isConnected = false;
     private bool isScanning = false;
     
     void Start()
     {
-        // Find PlayerController if not assigned
         if (playerController == null)
-            playerController = FindObjectOfType<PlayerController>();
+            playerController = FindFirstObjectByType<PlayerController>();
             
         Debug.Log("🔵 BLE Controller initialized");
         Debug.Log("Press 'C' to connect to NeuroPlayground Lite");
@@ -32,7 +30,6 @@ public class BLEController : MonoBehaviour
     
     void Update()
     {
-        // Manual connection controls
         if (Input.GetKeyDown(KeyCode.C) && !isConnected && !isScanning)
         {
             StartBLEConnection();
@@ -48,19 +45,13 @@ public class BLEController : MonoBehaviour
     {
         Debug.Log("🔍 Starting BLE scan for: " + deviceName);
         isScanning = true;
-        
-        // Start scanning simulation
         StartCoroutine(ScanForDevice());
     }
     
     IEnumerator ScanForDevice()
     {
         Debug.Log("📡 Scanning for NeuroPlayground Lite...");
-        
-        // Simulate scanning time
         yield return new WaitForSeconds(2.0f);
-        
-        // Simulate successful connection
         OnDeviceConnected();
     }
     
@@ -74,7 +65,6 @@ public class BLEController : MonoBehaviour
         
         if (enableSimulation)
         {
-            // Start listening for simulated notifications
             StartCoroutine(SimulateESP32Commands());
         }
     }
@@ -84,26 +74,20 @@ public class BLEController : MonoBehaviour
         Debug.Log("🎯 Starting BLE notification simulation...");
         Debug.Log($"⏱️  Commands will alternate every {commandInterval} seconds");
         
-        int currentCommand = 0; // Start with shrink command
+        int currentCommand = 0;
         
         while (isConnected)
         {
-            // Wait for the specified interval
             yield return new WaitForSeconds(commandInterval);
+            if (!isConnected) break;
             
-            if (!isConnected) break; // Exit if disconnected
-            
-            // Send the current command
             OnBLECommandReceived(currentCommand);
-            
-            // Toggle between 0 and 1 (just like your ESP32 firmware)
             currentCommand = currentCommand == 0 ? 1 : 0;
         }
         
         Debug.Log("🔴 BLE notification simulation stopped");
     }
     
-    // Called when BLE notification is received (simulated or real)
     void OnBLECommandReceived(int command)
     {
         Debug.Log($"📨 BLE Command Received: {command}");
@@ -139,7 +123,6 @@ public class BLEController : MonoBehaviour
         Debug.Log("🔵 Press 'C' to reconnect");
     }
     
-    // Public methods for external control (useful for UI later)
     public bool IsConnected() { return isConnected; }
     public bool IsScanning() { return isScanning; }
     
@@ -155,12 +138,11 @@ public class BLEController : MonoBehaviour
             DisconnectBLE();
     }
     
-    // Method for real BLE integration later
     public void ProcessRealBLENotification(byte[] data)
     {
         if (data != null && data.Length > 0)
         {
-            int command = data[0]; // Your ESP32 sends single byte (0 or 1)
+            int command = data[0];
             OnBLECommandReceived(command);
         }
     }

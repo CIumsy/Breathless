@@ -4,65 +4,90 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Scaling Settings")]
     public float normalSize = 1.0f;
-    public float smallSize = 0.6f;
+    public float smallSize  = 0.6f;
     public float scaleSpeed = 3.0f;
-    
-    [Header("Input Controls")]
+
+    [Header("Input Keys")]
     public KeyCode shrinkKey = KeyCode.S;
     public KeyCode normalKey = KeyCode.N;
+    public KeyCode jumpKey   = KeyCode.Space;
+    public KeyCode crouchKey = KeyCode.LeftControl;
+
+    [Header("Animator")]
+    public Animator animator;
     
     private Vector3 targetScale;
-    private bool isSmall = false;
-    
+    private Vector3 lockPos;
+
     void Start()
     {
-        // Initialize at normal size
-        targetScale = new Vector3(normalSize, normalSize, normalSize);
+        if (animator == null) animator = GetComponent<Animator>();
+
+        targetScale = Vector3.one * normalSize;
         transform.localScale = targetScale;
+        lockPos = transform.position;
     }
-    
+
     void Update()
     {
-        // Handle keyboard input
-        HandleInput();
-        
-        // Smooth scaling animation
-        transform.localScale = Vector3.Lerp(transform.localScale, targetScale, scaleSpeed * Time.deltaTime);
+        ReadInput();
+        SmoothScale();
+        LockXZPosition();
     }
-    
-    void HandleInput()
+
+    void ReadInput()
     {
-        if (Input.GetKeyDown(shrinkKey))
-        {
-            ShrinkPlayer();
-        }
-        
-        if (Input.GetKeyDown(normalKey))
-        {
-            RestorePlayer();
-        }
+        if (Input.GetKeyDown(shrinkKey))  Shrink();
+        if (Input.GetKeyDown(normalKey))  Grow();
+
+        if (Input.GetKeyDown(jumpKey))    animator.SetTrigger("JumpTrigger");
+
+        if (Input.GetKeyDown(crouchKey))  animator.SetTrigger("CrouchDownTrigger");
+        if (Input.GetKeyUp  (crouchKey))  animator.SetTrigger("CrouchUpTrigger");
     }
-    
-    public void ShrinkPlayer()
+
+    void Shrink()
     {
-        targetScale = new Vector3(smallSize, smallSize, smallSize);
-        isSmall = true;
+        targetScale = Vector3.one * smallSize;
         Debug.Log("Player shrinking to small size");
     }
-    
-    public void RestorePlayer()
+
+    void Grow()
     {
-        targetScale = new Vector3(normalSize, normalSize, normalSize);
-        isSmall = false;
+        targetScale = Vector3.one * normalSize;
         Debug.Log("Player returning to normal size");
     }
-    
-    // Public method for external control (ESP32 BLE later)
+
+    void SmoothScale()
+    {
+        transform.localScale = Vector3.Lerp(
+            transform.localScale, 
+            targetScale, 
+            scaleSpeed * Time.deltaTime);
+    }
+
+    void LockXZPosition()
+    {
+        Vector3 p = transform.position;
+        p.x = lockPos.x;
+        p.z = lockPos.z;
+        transform.position = p;
+    }
+
+    // Public methods for BLE integration (same names as before)
+    public void ShrinkPlayer()
+    {
+        Shrink();
+    }
+
+    public void RestorePlayer()
+    {
+        Grow();
+    }
+
     public void SetPlayerSize(bool makeSmall)
     {
-        if (makeSmall)
-            ShrinkPlayer();
-        else
-            RestorePlayer();
+        if (makeSmall) Shrink();
+        else           Grow();
     }
 }
